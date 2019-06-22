@@ -1,12 +1,12 @@
 const http = require('http');
 const url = require('url');
-const endPoint = "/bin/cpm/package.list.json";
+const fs = require('fs');
+const endPoint = "/bin/cpm/package.upload.json";
 const defaultServer = "http://admin:admin@localhost:8080";
 
-exports.command = 'list [server]'
-exports.desc = 'list installed packages'
+exports.command = 'upload [server] <package>'
+exports.desc = 'upload package on server'
 exports.handler = function (argv) {
-
   var options;
   if(argv.server) {
     options = url.parse(argv.server);
@@ -15,8 +15,9 @@ exports.handler = function (argv) {
   }
 
   options.path = endPoint;
-  options.method = "GET";
-  console.log('Listing packages on', options.host)
+  options.method = "POST";
+
+  console.log('install package',argv.package,'on', options.host)
 
   let data = '';
   var req = http.request(options, (res) => {
@@ -29,10 +30,7 @@ exports.handler = function (argv) {
     });
 
     res.on('end', () => {
-      var json = JSON.parse(data);
-      for(var i in json) {
-        console.log(json[i].id);
-      }
+      console.log(data);
     });
   
   });
@@ -42,5 +40,4 @@ exports.handler = function (argv) {
   });
 
   req.end();
-  
 }
