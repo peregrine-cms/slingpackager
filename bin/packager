@@ -4,4 +4,16 @@ require('yargs')
   .commandDir('../cmds')
   .demandCommand()
   .help()
+  .options({
+    server: {
+      alias: 's',
+      default: 'http://localhost:8080',
+      describe: 'server url'
+    },
+    user: {
+      alias: 'u',
+      default: 'admin:admin',
+      describe: 'server credentials in the form username:password'
+    }
+  })
   .argv
