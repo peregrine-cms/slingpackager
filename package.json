@@ -12,6 +12,7 @@
   "author": "peregrine-cms",
   "license": "Apache-2.0",
   "dependencies": {
+    "request": "^2.88.0",
     "yargs": "^13.2.4"
   }
 }
