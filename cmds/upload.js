@@ -1,12 +1,17 @@
 const request = require('request');
 const fs = require('fs');
+const path = require('path')
 const endPoint = "/bin/cpm/package.upload.json";
 
 exports.command = 'upload <package>'
 exports.desc = 'upload package to server'
 exports.handler = (argv) => {
+  var packagePath = argv.package;
+  if(!path.isAbsolute(packagePath)) {
+    packagePath = path.join(__dirname, packagePath);
+  }
 
-  if(!fs.existsSync(argv.package) || !fs.statSync(argv.package).isFile()) {
+  if(!fs.existsSync(packagePath) || !fs.statSync(packagePath).isFile()) {
     console.log("Valid package path not provided.");
     return;
   }
@@ -33,6 +38,6 @@ exports.handler = (argv) => {
     }
   }).auth(userName, pass);
 
-  post.form().append('file', fs.createReadStream(argv.package));
+  post.form().append('file', fs.createReadStream(packagePath));
   
 }
