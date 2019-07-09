@@ -1,42 +1,31 @@
-const http = require('http');
+const request = require('request');
 const url = require('url');
 const endPoint = "/bin/cpm/package.install.json";
-const defaultServer = "http://admin:admin@localhost:8080";
 
-exports.command = 'install [server] <package>'
+exports.command = 'install <package>'
 exports.desc = 'install package on server'
-exports.handler = function (argv) {
-  var options;
-  if(argv.server) {
-    options = url.parse(argv.server);
-  } else {
-    options = url.parse(defaultServer);
+exports.handler = (argv) => {
+  let user = argv.user.split(':');
+  let userName = user[0];
+  let pass = '';
+  if(user.length > 1) {
+    pass = user[1];
   }
 
-  options.path = endPoint;
-  options.method = "POST";
-
-  console.log('install package',argv.package,'on', options.host)
-
-  let data = '';
-  var req = http.request(options, (res) => {
-    if(res.statusCode != 200) {
-      console.log(`STATUS: ${res.statusCode} ${res.statusMessage}`);
+  console.log('Installing package',argv.package,'on', argv.server)
+  let url = argv.server + endPoint + argv.package;
+  request.post({url: url}, (error, response, body) => {
+    if(error) {
+      console.log(error);
     }
 
-    res.on('data', (chunk) => {
-      data += chunk;
-    });
-
-    res.on('end', () => {
-      console.log(data);
-    });
-  
-  });
-
-  req.on('error', (e) => {
-    console.error(`problem with request: ${e.message}`);
-  });
-
-  req.end();
+    if(response && response.statusCode===200) {
+      if(body) {
+        var json = JSON.parse(body);
+        console.log(json.status)
+      }
+    } else {
+      console.log('Unable to install package. statusCode:', response && response.statusCode);
+    }
+  }).auth(userName, pass);
 }

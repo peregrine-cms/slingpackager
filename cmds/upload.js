@@ -1,43 +1,38 @@
-const http = require('http');
-const url = require('url');
+const request = require('request');
 const fs = require('fs');
 const endPoint = "/bin/cpm/package.upload.json";
-const defaultServer = "http://admin:admin@localhost:8080";
 
-exports.command = 'upload [server] <package>'
-exports.desc = 'upload package on server'
-exports.handler = function (argv) {
-  var options;
-  if(argv.server) {
-    options = url.parse(argv.server);
-  } else {
-    options = url.parse(defaultServer);
+exports.command = 'upload <package>'
+exports.desc = 'upload package to server'
+exports.handler = (argv) => {
+
+  if(!fs.existsSync(argv.package) || !fs.statSync(argv.package).isFile()) {
+    console.log("Valid package path not provided.");
+    return;
   }
 
-  options.path = endPoint;
-  options.method = "POST";
+  let user = argv.user.split(':');
+  let userName = user[0];
+  let pass = '';
+  if(user.length > 1) {
+    pass = user[1];
+  }
 
-  console.log('install package',argv.package,'on', options.host)
-
-  let data = '';
-  var req = http.request(options, (res) => {
-    if(res.statusCode != 200) {
-      console.log(`STATUS: ${res.statusCode} ${res.statusMessage}`);
+  console.log('Uploading package',argv.package,'on', argv.server);
+  let post = request.post({url: argv.server + endPoint}, (error, response, body) => {
+    if(error) {
+      console.log(error);
     }
 
-    res.on('data', (chunk) => {
-      data += chunk;
-    });
+    if(response && response.statusCode===200) {
+      var json = JSON.parse(body);
+      console.log(json.status)
+    } else {
+      // console.log(body);
+      console.log('Unable to upload package. statusCode:', response && response.statusCode);
+    }
+  }).auth(userName, pass);
 
-    res.on('end', () => {
-      console.log(data);
-    });
+  post.form().append('file', fs.createReadStream(argv.package));
   
-  });
-
-  req.on('error', (e) => {
-    console.error(`problem with request: ${e.message}`);
-  });
-
-  req.end();
 }

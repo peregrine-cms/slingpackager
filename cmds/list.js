@@ -1,46 +1,30 @@
-const http = require('http');
-const url = require('url');
+const request = require('request');
 const endPoint = "/bin/cpm/package.list.json";
-const defaultServer = "http://admin:admin@localhost:8080";
 
-exports.command = 'list [server]'
+exports.command = 'list'
 exports.desc = 'list installed packages'
-exports.handler = function (argv) {
-
-  var options;
-  if(argv.server) {
-    options = url.parse(argv.server);
-  } else {
-    options = url.parse(defaultServer);
+exports.handler = (argv) => {
+  let user = argv.user.split(':');
+  let userName = user[0];
+  let pass = '';
+  if(user.length > 1) {
+    pass = user[1];
   }
 
-  options.path = endPoint;
-  options.method = "GET";
-  console.log('Listing packages on', options.host)
-
-  let data = '';
-  var req = http.request(options, (res) => {
-    if(res.statusCode != 200) {
-      console.log(`STATUS: ${res.statusCode} ${res.statusMessage}`);
+  console.log('Listing packages on', argv.server)
+  request.get({url: argv.server + endPoint}, (error, response, body) => {
+    if(error) {
+      console.log(error);
     }
 
-    res.on('data', (chunk) => {
-      data += chunk;
-    });
-
-    res.on('end', () => {
-      var json = JSON.parse(data);
+    if(response && response.statusCode===200) {
+      var json = JSON.parse(body);
       for(var i in json) {
         console.log(json[i].id);
       }
-    });
-  
-  });
+    } else {
+      console.log('Unable to connect to server. statusCode:', response && response.statusCode);
+    }
 
-  req.on('error', (e) => {
-    console.error(`problem with request: ${e.message}`);
-  });
-
-  req.end();
-  
+  }).auth(userName, pass);
 }
