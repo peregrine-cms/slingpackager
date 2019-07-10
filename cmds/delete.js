@@ -1,5 +1,5 @@
-const request = require('request');
-const endPoint = "/bin/cpm/package.delete.json";
+const cpmPackager = require('../utils/composumpackager')
+const aemPackager = require('../utils/aempackager')
 
 exports.command = 'delete <package>'
 exports.desc = 'delete package on server'
@@ -11,21 +11,11 @@ exports.handler = (argv) => {
     pass = user[1];
   }
 
-  console.log('Deleting package',argv.package,'on', argv.server)
-  let url = argv.server + endPoint + argv.package;
-  request({url: url, method: 'DELETE'}, (error, response, body) => {
-    if(error) {
-      console.log(error);
-    }
-
-    if(response && response.statusCode===200) {
-      if(body) {
-        var json = JSON.parse(body);
-        console.log(json.status)
-      }
+  cpmPackager.checkService(argv.server, userName, pass, (success) => {
+    if(success) {
+      cpmPackager.deletePackage(argv.server, userName, pass, argv.package);
     } else {
-      // console.log(body);
-      console.log('Unable to delete package. statusCode:', response && response.statusCode);
+      aemPackager.deletePackage(argv.server, userName, pass, argv.package);
     }
-  }).auth(userName, pass);
+  });
 }

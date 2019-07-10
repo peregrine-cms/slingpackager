@@ -1,7 +1,7 @@
-const request = require('request');
 const fs = require('fs');
 const path = require('path')
-const endPoint = "/bin/cpm/package.upload.json";
+const cpmPackager = require('../utils/composumpackager')
+const aemPackager = require('../utils/aempackager')
 
 exports.command = 'upload <package>'
 exports.desc = 'upload package to server'
@@ -23,21 +23,11 @@ exports.handler = (argv) => {
     pass = user[1];
   }
 
-  console.log('Uploading package',argv.package,'on', argv.server);
-  let post = request.post({url: argv.server + endPoint}, (error, response, body) => {
-    if(error) {
-      console.log(error);
-    }
-
-    if(response && response.statusCode===200) {
-      var json = JSON.parse(body);
-      console.log(json.status)
+  cpmPackager.checkService(argv.server, userName, pass, (success) => {
+    if(success) {
+      cpmPackager.uploadPackage(argv.server, userName, pass, packagePath);
     } else {
-      // console.log(body);
-      console.log('Unable to upload package. statusCode:', response && response.statusCode);
+      aemPackager.uploadPackage(argv.server, userName, pass, packagePath);
     }
-  }).auth(userName, pass);
-
-  post.form().append('file', fs.createReadStream(packagePath));
-  
+  });
 }

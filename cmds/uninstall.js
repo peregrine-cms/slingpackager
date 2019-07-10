@@ -1,6 +1,5 @@
-const request = require('request');
-const url = require('url');
-const endPoint = "/bin/cpm/package.uninstall.json";
+const cpmPackager = require('../utils/composumpackager')
+const aemPackager = require('../utils/aempackager')
 
 exports.command = 'uninstall <package>'
 exports.desc = 'uninstall package on server'
@@ -12,20 +11,11 @@ exports.handler = (argv) => {
     pass = user[1];
   }
 
-  console.log('uninstall package',argv.package,'on', argv.server)
-  let url = argv.server + endPoint + argv.package;
-  request.post({url: url}, (error, response, body) => {
-    if(error) {
-      console.log(error);
-    }
-
-    if(response && response.statusCode===200) {
-      if(body) {
-        var json = JSON.parse(body);
-        console.log(json.status)
-      }
+  cpmPackager.checkService(argv.server, userName, pass, (success) => {
+    if(success) {
+      cpmPackager.uninstallPackage(argv.server, userName, pass, argv.package);
     } else {
-      console.log('Unable to uninstall package. statusCode:', response && response.statusCode);
+      aemPackager.uninstallPackage(argv.server, userName, pass, argv.package);
     }
-  }).auth(userName, pass);
+  });
 }
