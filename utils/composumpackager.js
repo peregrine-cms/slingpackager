@@ -28,7 +28,8 @@ const list = (url, username, password) => {
 
         if (response && response.statusCode === 200) {
             var json = JSON.parse(body);
-            displayPackages(json);
+            // Check for structure diff between Composume in Sling9 and Sling11
+            displayPackages(json.children ? json.children : json);
         } else {
             console.log('Unable to connect to server. statusCode:', response && response.statusCode);
         }
@@ -112,10 +113,17 @@ const uninstallPackage = (url, username, password, package) => {
 
 function displayPackages(packages) {
     for (var i = 0; i < packages.length; i++) {
-        console.log('name=' + packages[i].definition.name +
-            ' group=' + packages[i].definition.group +
-            ' version=' + packages[i].definition.version +
-            ' downloadName=' + packages[i].id);
+        // Check if package has deffinition
+        if(packages[i].definition) {
+            console.log('name=' + packages[i].definition.name +
+               ' group=' + packages[i].definition.group +
+               ' version=' + packages[i].definition.version +
+               ' downloadName=' + packages[i].id);
+        } else {
+            console.log('name=' + packages[i].name +
+               ' group=' + packages[i].group +
+               ' downloadName=' + packages[i].id);
+        }
     }
 }
 
