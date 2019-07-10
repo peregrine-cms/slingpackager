@@ -11,7 +11,7 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "bin": {
-    "slingpackager": "./bin/packager"
+    "slingpackager": "./bin/slingpackager"
   },
   "author": "peregrine-cms",
   "license": "Apache-2.0",
