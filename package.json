@@ -1,7 +1,7 @@
 {
   "name": "@peregrinecms/slingpackager",
   "version": "0.0.1",
-  "description": "prepare a slinig package file for sling and install it",
+  "description": "prepare a sling package file for sling and install it",
   "main": "index.js",
   "repository": {
     "type": "git",
