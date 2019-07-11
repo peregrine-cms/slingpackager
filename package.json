@@ -1,5 +1,5 @@
 {
-  "name": "slingpackager",
+  "name": "@peregrinecms/slingpackager",
   "version": "0.0.1",
   "description": "prepare a slinig package file for sling and install it",
   "main": "index.js",
