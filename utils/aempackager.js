@@ -113,7 +113,7 @@ function displayPackages(packages) {
     console.log('name='+packages[i].name[0]+
        ' group='+packages[i].group[0]+
        ' version='+packages[i].version[0]+
-       ' downloadName='+packages[i].downloadName[0]);
+       ' path='+packages[i].downloadName[0]);
   }
 }
 
