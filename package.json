@@ -20,6 +20,7 @@
     "request": "^2.88.0",
     "verbosity": "^1.1.1",
     "xml2js": "^0.4.19",
+    "xmlbuilder": "^13.0.2",
     "yargs": "^13.2.4"
   }
 }

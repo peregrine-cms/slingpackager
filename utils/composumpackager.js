@@ -173,7 +173,7 @@ function listPackages(url, username, password, path) {
 function displayPackages(url, username, password, packages) {
     for (var i = 0; i < packages.length; i++) {
         if(packages[i].type === 'package') {
-            logger.info('name=' + packages[i].definition.name +
+            logger.log('name=' + packages[i].definition.name +
                 ' group=' + packages[i].definition.group +
                 ' version=' + packages[i].definition.version +
                 ' path=' + packages[i].id);
