@@ -1,13 +1,17 @@
 {
-  "name": "slingpackager",
+  "name": "@peregrinecms/slingpackager",
   "version": "0.0.1",
-  "description": "prepare a slinig package file for sling and install it",
+  "description": "prepare a sling package file for sling and install it",
   "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/peregrine-cms/slingpackager.git"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "bin": {
-    "packager": "./bin/packager"
+    "slingpackager": "./bin/slingpackager"
   },
   "author": "peregrine-cms",
   "license": "Apache-2.0",
