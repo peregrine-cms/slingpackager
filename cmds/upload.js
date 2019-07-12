@@ -17,7 +17,7 @@ exports.handler = (argv) => {
 
   var packagePath = argv.package;
   if(!path.isAbsolute(packagePath)) {
-    packagePath = path.join(__dirname, packagePath);
+    packagePath = path.join(process.cwd(), packagePath);
   }
 
   if(!fs.existsSync(packagePath) || !fs.statSync(packagePath).isFile()) {

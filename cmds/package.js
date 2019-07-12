@@ -24,7 +24,7 @@ exports.handler = (argv) => {
 function archive(argv) {
   var packagePath = argv.package;
   if(!path.isAbsolute(packagePath)) {
-    packagePath = path.join(__dirname, packagePath);
+    packagePath = path.join(process.cwd(), packagePath);
   }
 
   console.log('package folder', argv.folder, 'as', packagePath);
