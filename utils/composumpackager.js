@@ -1,6 +1,7 @@
 const request = require('request')
 const fs = require('fs')
 const path = require('path')
+const logger = require('./consoleLogger');
 
 const listEndpoint = "/bin/cpm/package.list.json";
 const uploadEndpoint = "/bin/cpm/package.upload.json";
@@ -9,7 +10,10 @@ const installEndpoint = "/bin/cpm/package.install.json";
 const uninstallEndpoint = "/bin/cpm/package.uninstall.json";
 
 const checkService = (url, username, password, callback) => {
-    request.get({ url: url + '/bin/cpm/package.json' }, (error, response, body) => {
+    let serviceURL = url + '/bin/cpm/package.json';
+    logger.debug('Checking Composum Package Manager.');
+    logger.debug('Service call: ', serviceURL);
+    request.get({ url: serviceURL }, (error, response, body) => {
         if (response && response.statusCode === 200) {
             callback(true);
         } else {
@@ -20,84 +24,113 @@ const checkService = (url, username, password, callback) => {
 }
 
 const list = (url, username, password) => {
-    console.log('Listing packages on', url);
+    logger.log('Listing packages on', url);
     listPackages(url, username, password, '');
 }
 
-const uploadPackage = (url, username, password, packagePath) => {
-    console.log('Uploading package', packagePath, 'on', url);
-    let post = request.post({ url: url + uploadEndpoint }, (error, response, body) => {
+const uploadPackage = (url, username, password, packagePath, install) => {
+    logger.log('Uploading package', packagePath, 'on', url);
+
+    let serviceURL = url + uploadEndpoint;
+    logger.debug('Service call: ', serviceURL);
+    let post = request.post({ url: serviceURL }, (error, response, body) => {
         if (error) {
-            console.log(error);
+            logger.error(error);
         }
 
         if (response && response.statusCode === 200) {
             var json = JSON.parse(body);
-            console.log(json.status)
+            logger.log(json.status)
+            logger.debug(JSON.stringify(json));
+
+            if(install) {
+                logger.debug('installing', json.path);
+                installPackage(url, username, password, json.path);
+            }
+
         } else {
-            console.log('Unable to upload package. statusCode:', response && response.statusCode);
+            logger.error('Unable to upload package. statusCode:', response && response.statusCode);
+            logger.debug(body);
         }
     }).auth(username, password);
 
     post.form().append('file', fs.createReadStream(packagePath));
+
+    logger.debug(JSON.stringify(post.toJSON()));
 }
 
 const deletePackage = (url, username, password, package) => {
-    console.log('Deleting package', package, 'on', url);
-    request({ url: url + deleteEndpoint + package, method: 'DELETE' }, (error, response, body) => {
+    logger.log('Deleting package', package, 'on', url);
+
+    let serviceURL = url + deleteEndpoint + package;
+    logger.debug('Service call: ', serviceURL);
+    let req = request({ url: serviceURL, method: 'DELETE' }, (error, response, body) => {
         if (error) {
-            console.log(error);
+            logger.error(error);
         }
 
         if (response && response.statusCode === 200) {
             if (body) {
                 var json = JSON.parse(body);
-                console.log(json.status)
+                logger.log(json.status)
             } else {
-                console.log('Unable to delete package. Check package name (try by path).');
+                logger.error('Unable to delete package. Check package name (try by path).');
             }
         } else {
-            console.log('Unable to delete package. statusCode:', response && response.statusCode);
+            logger.error('Unable to delete package. statusCode:', response && response.statusCode);
+            logger.debug(body);
         }
     }).auth(username, password);
+
+    logger.debug(JSON.stringify(req.toJSON()));
 }
 
 const installPackage = (url, username, password, package) => {
-    console.log('Installing package', package, 'on', url);
-    request.post({ url: url + installEndpoint + package }, (error, response, body) => {
+    logger.log('Installing package', package, 'on', url);
+
+    let serviceURL = url + installEndpoint + package;
+    logger.debug('Service call: ', serviceURL);
+    let post = request.post({ url: serviceURL }, (error, response, body) => {
         if (error) {
-            console.log(error);
+            logger.error(error);
         }
 
         if (response && response.statusCode === 200) {
             if (body) {
                 var json = JSON.parse(body);
-                console.log(json.status)
+                logger.log(json.status)
             }
         } else {
-            console.log('Unable to install package. statusCode:', response && response.statusCode);
+            logger.error('Unable to install package. statusCode:', response && response.statusCode);
+            logger.debug(body);
         }
     }).auth(username, password);
+
+    logger.debug(JSON.stringify(post.toJSON()));
 }
 
 const uninstallPackage = (url, username, password, package) => {
-    console.log('Uninstalling package', package, 'on', url);
+    logger.log('Uninstalling package', package, 'on', url);
+
+    let serviceURL = url + '/bin/cpm/core/jobcontrol.job.json';
+    logger.debug('Service call: ', serviceURL);
     // Commented out code bellow does not work wirh Composum 1.7/Sling9
     // var post = request.post({ url: url + uninstallEndpoint + package }, (error, response, body) => {
-    var post = request.post({ url: url + '/bin/cpm/core/jobcontrol.job.json' }, (error, response, body) => {
+    var post = request.post({ url: serviceURL }, (error, response, body) => {
         if (error) {
-            console.log(error);
+            logger.error(error);
         }
 
         if (response && response.statusCode === 200) {
             if (body) {
                 var json = JSON.parse(body);
-                console.log('done');
+                logger.log('done');
                 // Commented out for Composum 1.7/Sling9
-                // console.log(json.status)
+                // logger.log(json.status)
             }
         } else {
-            console.log('Unable to uninstall package. statusCode:', response && response.statusCode);
+            logger.error('Unable to uninstall package. statusCode:', response && response.statusCode);
+            logger.debug(body);
         }
     }).auth(username, password);
 
@@ -108,12 +141,17 @@ const uninstallPackage = (url, username, password, package) => {
     form.append('reference', package);
     form.append('_charset_', 'UTF-8');
     form.append('operation', 'uninstall');
+
+    logger.debug(JSON.stringify(post.toJSON()));
 }
 
 function listPackages(url, username, password, path) {
-    request.get({ url: url + listEndpoint + path}, (error, response, body) => {
+    var serviceURL = url + listEndpoint + path;
+    logger.debug('Service call: ', serviceURL);
+
+    let req = request.get({ url: serviceURL}, (error, response, body) => {
         if (error) {
-            console.log(error);
+            logger.error(error);
         }
 
         if (response && response.statusCode === 200) {
@@ -123,16 +161,19 @@ function listPackages(url, username, password, path) {
             var packages = json.children ? json.children : json;
             displayPackages(url, username, password, packages);
         } else {
-            console.log('Unable to connect to server. statusCode:', response && response.statusCode);
+            logger.error('Unable to connect to server. statusCode:', response && response.statusCode);
+            logger.debug(body);
         }
 
     }).auth(username, password);
+
+    logger.debug(JSON.stringify(req.toJSON()));
 }
 
 function displayPackages(url, username, password, packages) {
     for (var i = 0; i < packages.length; i++) {
         if(packages[i].type === 'package') {
-            console.log('name=' + packages[i].definition.name +
+            logger.info('name=' + packages[i].definition.name +
                 ' group=' + packages[i].definition.group +
                 ' version=' + packages[i].definition.version +
                 ' path=' + packages[i].id);

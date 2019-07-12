@@ -1,10 +1,21 @@
 const archiver = require('archiver')
 const fs = require('fs')
 const path = require('path')
+const logger = require('../utils/consoleLogger')
 
 exports.command = 'package <folder> <package>'
 exports.desc = 'create a package'
+exports.builder = {
+  server: {
+    hidden: true
+  },
+  user: {
+    hidden: true
+  }
+}
 exports.handler = (argv) => {
+  logger.init(argv);
+  
   if(isValid(argv.folder)) {
     archive(argv);
   }
