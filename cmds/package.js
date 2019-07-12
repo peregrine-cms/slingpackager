@@ -5,6 +5,14 @@ const logger = require('../utils/consoleLogger')
 
 exports.command = 'package <folder> <package>'
 exports.desc = 'create a package'
+exports.builder = {
+  server: {
+    hidden: true
+  },
+  user: {
+    hidden: true
+  }
+}
 exports.handler = (argv) => {
   logger.init(argv);
   
