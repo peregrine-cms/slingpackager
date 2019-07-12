@@ -30,7 +30,7 @@ const list = (url, username, password) => {
   logger.debug('Service call: ', serviceURL);
   let post = request.post({url: serviceURL}, (error, response, body) => {
     if(error) {
-      logger.log(error);
+      logger.error(error);
     }
 
     if(response && response.statusCode===200) {
@@ -40,11 +40,11 @@ const list = (url, username, password) => {
           var data = getData(result);
           displayPackages(data[0].packages[0].package);
         } else if(error) {
-          logger.log(error);
+          logger.error(error);
         }
       });
     } else {
-      logger.log('Unable to connect to server. statusCode:', response && response.statusCode);
+      logger.error('Unable to connect to server. statusCode:', response && response.statusCode);
     }
 
   }).auth(username, password);
@@ -56,10 +56,14 @@ const uploadPackage = (url, username, password, packagePath, install) => {
   logger.log('Uploading AEM package',packagePath,'on', url);
 
   let serviceURL = url + endpoint;
+  if(install) {
+    serviceURL = serviceURL + '?install=true'
+  }
+
   logger.debug('Service call: ', serviceURL);
   var post = request.post({url: serviceURL}, (error, response, body) => {
     if(error) {
-      logger.log(error);
+      logger.error(error);
     }
 
     if(response && response.statusCode===200) {
@@ -68,23 +72,19 @@ const uploadPackage = (url, username, password, packagePath, install) => {
           if(getStatusCode(result) === '200') {
             logger.log("Done!");
           } else {
-            logger.log("Something went wrong! Check server logs.");
+            logger.error("Something went wrong! Check server logs.");
           }
         } else if(error) {
-          logger.log(error);
+          logger.error(error);
         }
+        logger.debug(body);
       });
     } else {
-      logger.log('Unable to connect to server. statusCode:', response && response.statusCode);
+      logger.error('Unable to connect to server. statusCode:', response && response.statusCode);
     }
 
   }).auth(username, password);
   post.form().append('file', fs.createReadStream(packagePath));
-
-  if(install) {
-    post.form().append('install', 'true');
-  }
-
   logger.debug(JSON.stringify(post.toJSON()));
 }
 
@@ -111,7 +111,7 @@ function executePackageCommand(url, username, password, packageName, cmd) {
   logger.debug('Service call: ', serviceURL);
   var post = request.post({url: serviceURL}, (error, response, body) => {
     if(error) {
-      logger.log(error);
+      logger.error(error);
     }
 
     if(response && response.statusCode===200) {
@@ -123,11 +123,11 @@ function executePackageCommand(url, username, password, packageName, cmd) {
             logger.log(getStatusText(result));
           }
         } else if(error) {
-          logger.log(error);
+          logger.error(error);
         }
       });
     } else {
-      logger.log('Unable to connect to server. statusCode:', response && response.statusCode);
+      logger.error('Unable to connect to server. statusCode:', response && response.statusCode);
     }
 
   }).auth(username, password);
