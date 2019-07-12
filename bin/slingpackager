@@ -14,6 +14,10 @@ require('yargs')
       alias: 'u',
       default: 'admin:admin',
       describe: 'server credentials in the form username:password'
+    },
+    verbose: {
+      alias: 'v',
+      describe: 'turn on verbose output'
     }
   })
   .argv

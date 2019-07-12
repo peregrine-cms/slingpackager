@@ -2,17 +2,20 @@ const fs = require('fs');
 const path = require('path')
 const cpmPackager = require('../utils/composumpackager')
 const aemPackager = require('../utils/aempackager')
+const logger = require('../utils/consoleLogger')
 
 exports.command = 'upload <package>'
 exports.desc = 'upload package to server'
 exports.handler = (argv) => {
+  logger.init(argv);
+
   var packagePath = argv.package;
   if(!path.isAbsolute(packagePath)) {
     packagePath = path.join(__dirname, packagePath);
   }
 
   if(!fs.existsSync(packagePath) || !fs.statSync(packagePath).isFile()) {
-    console.log("Valid package path not provided.");
+    logger.error("Valid package path not provided.");
     return;
   }
 

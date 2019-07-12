@@ -1,9 +1,12 @@
 const cpmPackager = require('../utils/composumpackager')
 const aemPackager = require('../utils/aempackager')
+const logger = require('../utils/consoleLogger')
 
 exports.command = 'list'
 exports.desc = 'list installed packages'
 exports.handler = (argv) => {
+  logger.init(argv);
+
   let user = argv.user.split(':');
   let userName = user[0];
   let pass = '';
@@ -17,5 +20,5 @@ exports.handler = (argv) => {
     } else {
       aemPackager.list(argv.server, userName, pass);
     }
-  });
+  }); 
 }
