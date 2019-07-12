@@ -28,7 +28,7 @@ const list = (url, username, password) => {
     listPackages(url, username, password, '');
 }
 
-const uploadPackage = (url, username, password, packagePath) => {
+const uploadPackage = (url, username, password, packagePath, install) => {
     logger.log('Uploading package', packagePath, 'on', url);
 
     let serviceURL = url + uploadEndpoint;
@@ -41,8 +41,16 @@ const uploadPackage = (url, username, password, packagePath) => {
         if (response && response.statusCode === 200) {
             var json = JSON.parse(body);
             logger.log(json.status)
+            logger.debug(JSON.stringify(json));
+
+            if(install) {
+                logger.debug('installing', json.path);
+                installPackage(url, username, password, json.path);
+            }
+
         } else {
             logger.error('Unable to upload package. statusCode:', response && response.statusCode);
+            logger.debug(body);
         }
     }).auth(username, password);
 
@@ -70,6 +78,7 @@ const deletePackage = (url, username, password, package) => {
             }
         } else {
             logger.error('Unable to delete package. statusCode:', response && response.statusCode);
+            logger.debug(body);
         }
     }).auth(username, password);
 
@@ -93,6 +102,7 @@ const installPackage = (url, username, password, package) => {
             }
         } else {
             logger.error('Unable to install package. statusCode:', response && response.statusCode);
+            logger.debug(body);
         }
     }).auth(username, password);
 
@@ -120,6 +130,7 @@ const uninstallPackage = (url, username, password, package) => {
             }
         } else {
             logger.error('Unable to uninstall package. statusCode:', response && response.statusCode);
+            logger.debug(body);
         }
     }).auth(username, password);
 
@@ -151,6 +162,7 @@ function listPackages(url, username, password, path) {
             displayPackages(url, username, password, packages);
         } else {
             logger.error('Unable to connect to server. statusCode:', response && response.statusCode);
+            logger.debug(body);
         }
 
     }).auth(username, password);

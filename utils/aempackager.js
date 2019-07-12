@@ -52,7 +52,7 @@ const list = (url, username, password) => {
   logger.debug(JSON.stringify(post.toJSON()));
 }
 
-const uploadPackage = (url, username, password, packagePath) => {
+const uploadPackage = (url, username, password, packagePath, install) => {
   logger.log('Uploading AEM package',packagePath,'on', url);
 
   let serviceURL = url + endpoint;
@@ -80,6 +80,10 @@ const uploadPackage = (url, username, password, packagePath) => {
 
   }).auth(username, password);
   post.form().append('file', fs.createReadStream(packagePath));
+
+  if(install) {
+    post.form().append('install', 'true');
+  }
 
   logger.debug(JSON.stringify(post.toJSON()));
 }
