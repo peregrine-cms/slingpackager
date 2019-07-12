@@ -1,9 +1,12 @@
 const archiver = require('archiver')
 const fs = require('fs')
 const path = require('path')
+const xmlbuilder = require('xmlbuilder');
 const logger = require('../utils/consoleLogger')
 
-exports.command = 'package <folder> <package>'
+const configFile = 'slingpackager.config.js'
+
+exports.command = 'package <folder>'
 exports.desc = 'create a package'
 exports.builder = {
   server: {
@@ -22,12 +25,15 @@ exports.handler = (argv) => {
 }
 
 function archive(argv) {
-  var packagePath = argv.package;
-  if(!path.isAbsolute(packagePath)) {
-    packagePath = path.join(process.cwd(), packagePath);
+  var json = getConfigJson(argv.folder);
+  if(json === undefined) {
+    logger.error(configFile,'not found in the project.');
+    throw "Unable to find configuration " + configFile;
   }
 
-  console.log('package folder', argv.folder, 'as', packagePath);
+  var packagePath = path.join(process.cwd(), packageName(json));
+
+  logger.log('package folder', argv.folder, 'as', packagePath);
   var output = fs.createWriteStream(packagePath);
   var archive = archiver('zip');
 
@@ -40,6 +46,12 @@ function archive(argv) {
 
   var metainf = path.join(argv.folder, 'META-INF');
   archive.directory(metainf, 'META-INF', { name: 'META-INF' });
+
+  addConfigDefaults(json);
+  var xml = propertiesXMLFromJson(json);
+  logger.debug('Writing generated META-INF/vault/properties.xml');
+  logger.debug(xml);
+  archive.append(xml, {name: 'META-INF/vault/properties.xml'});
 
   archive.finalize();
 }
@@ -63,4 +75,101 @@ function isValid(dir) {
   }
 
   return true;
+}
+
+function propertiesXMLFromJson(json) {
+  var properties = json['vault-properties'];
+  var entries = properties['entry'];
+  var xml = xmlbuilder.create('properties'); 
+
+  for(var elem in properties) {
+    if(elem != 'entry') {
+      xml.ele(elem, properties[elem]);
+    }
+  }
+
+  for(var entry in entries) {
+    xml.ele('entry', {'key': entry}, entries[entry]);
+  }
+
+  xml.end({ pretty: true});
+  
+  var xmlProlog = '<?xml version="1.0" encoding="UTF-8" standalone="no"?>\n' 
+    + '<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">\n';
+
+  return xmlProlog + xml.toString({ pretty: true});
+}
+
+function addConfigDefaults(json) {
+  var properties = json['vault-properties'];
+  var entries = properties['entry'];
+
+  if(!entries['createdBy']) {
+    entries['createdBy'] = 'slingpackager';
+  }
+
+  if(!entries['acHandling']) {
+    entries['acHandling'] = 'IGNORE';
+  }
+
+  if(!entries['allowIndexDefinitions']) {
+    entries['allowIndexDefinitions'] = false;
+  }
+
+  if(!entries['requiresRoot']) {
+    entries['requiresRoot'] = false;
+  }
+
+  if(!entries['path']) {
+    entries['path'] = '/etc/packages/' 
+       + entries['group'] 
+       + '/' + entries['name'] 
+       + '-' + entries['version'] 
+       + '.zip';
+  }
+}
+
+function packageName(json) {
+  var properties = json['vault-properties'];
+  var entries = properties['entry'];
+  var name = entries['name'];
+  var group = entries['group'];
+  var version = entries['version'];
+
+  if(!name || !group || !version) {
+    logger.error(configFile,
+      "is missing one or more of the required entries for 'name', 'group' or 'version' to generate a package.");
+    throw "Config is missing one or more of the required entries for 'name', 'group' or 'version' to generate a package."
+  }
+
+  return name+"-"+version+".zip";
+}
+
+function getConfigJson(dirPath) {
+  var configFile = findConfigFile(dirPath);
+
+  if(configFile != undefined) {
+    var json = JSON.parse(fs.readFileSync(configFile, 'utf8'));
+    logger.debug(JSON.stringify(json));
+    return json;
+  }
+
+  return undefined;
+}
+
+function findConfigFile(dirPath) {
+  logger.debug('Looking for', configFile, 'in', dirPath);
+  var filePath = path.join(dirPath, configFile);
+  if(fs.existsSync(filePath)) {
+    logger.debug('Found', filePath);
+    return filePath;
+  } else {
+    var parentPath = path.resolve(dirPath, '..');
+    if(parentPath && parentPath != dirPath) {
+      return findConfigFile(parentPath);
+    }
+  }
+
+  logger.warn('Unable to find package.json');
+  return undefined;
 }
