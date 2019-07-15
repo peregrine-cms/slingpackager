@@ -88,23 +88,34 @@ Options:
   --version      Show version number                                   [boolean]
   --help         Show help                                             [boolean]
   --verbose, -v  turn on verbose output
+  --destination, -d  Package destination directory. Defaults to current
+                     directory.
+  --config, -c       Package configuration/properties. Package properties.xml
+                     and package name are generated from this. If this option is
+                     missing slingpackage will search for
+                     slingpackager.config.js in the parent directories.
 ```
 
-We expect a simple `slingpackager.config.js` file
-in the folder where you execute the command that looks like this:
+The ```<folder>``` should point to the parent folder of jcr_root and META_INF with your project's content.
+
+Bellow is an example of minimal configuration required for package generation using ```package``` command.
 
 ```
 {
     "vault-properties": {
-		"comment": "package comment",
+		"comment": "myapp - UI Apps",
 		"entry": {
-			"name": "package-name",
-			"version": "VERSION",
-			"group": "package-group-name"
+			"name": "ui.apps",
+			"version": "1.0-SNAPSHOT",
+			"group": "myapp"
 		}
     }
 }
 ```
+
+This should be placed in the file named _slingpackager.config.js_ anywhere in the folder path passed to ```package``` command (we suggest project's root folder). Or path to configuration file can be specified via --config option. 
+
+The above example will result in a package file named ui.apps-1.0-SNAPSHOT.zip with the fillowing properties.xml file inside it's META/vault folder.
 
 ### Upload
 
@@ -169,4 +180,73 @@ Options:
   --user, -u     server credentials in the form username:password
                                                         [default: "admin:admin"]
   --verbose, -v  turn on verbose output
+```
+
+### Examples
+
+#### Create a package.
+```
+slingpackager package /pathToMyProject/pathToPackageContent
+```
+
+#### Upload package to server.
+```
+slingpackager upload ui.apps-1.0-SNAPSHOT.zip
+```
+
+#### Upload package to server and install it.
+```
+slingpackager upload ui.apps-1.0-SNAPSHOT.zip -i
+```
+
+#### Upload package to local AEM Author on port 4502 as user admin:somePassword.
+```
+slingpackager upload ui.apps-1.0-SNAPSHOT.zip -u admin:somePassword -s http://localhost:4502
+```
+
+#### List packages on the server.
+```
+slingpackager list
+name=ui.apps group=themeclean-flex version=1.0-SNAPSHOT path=/themeclean-flex/ui.apps-1.0-SNAPSHOT.zip
+name=ui.apps group=themeclean version=1.0-SNAPSHOT path=/themeclean/ui.apps-1.0-SNAPSHOT.zip
+name=example-vue.ui.apps group=com.peregrine-cms.example version=1.0-SNAPSHOT path=/com.peregrine-cms.example/example-vue.ui.apps-1.0-SNAPSHOT.zip
+name=admin.sling.ui.apps group=com.peregrine-cms version=1.0-SNAPSHOT path=/com.peregrine-cms/admin.sling.ui.apps-1.0-SNAPSHOT.zip
+name=admin.ui.apps group=com.peregrine-cms version=1.0-SNAPSHOT path=/com.peregrine-cms/admin.ui.apps-1.0-SNAPSHOT.zip
+name=admin.ui.materialize group=com.peregrine-cms version=1.0-SNAPSHOT path=/com.peregrine-cms/admin.ui.materialize-1.0-SNAPSHOT.zip
+name=base.ui.apps group=com.peregrine-cms version=1.0-SNAPSHOT path=/com.peregrine-cms/base.ui.apps-1.0-SNAPSHOT.zip
+name=external group=com.peregrine-cms version=1.0-SNAPSHOT path=/com.peregrine-cms/external-1.0-SNAPSHOT.zip
+name=felib.ui.apps group=com.peregrine-cms version=1.0-SNAPSHOT path=/com.peregrine-cms/felib.ui.apps-1.0-SNAPSHOT.zip
+name=node-js.ui.apps group=com.peregrine-cms version=1.0-SNAPSHOT path=/com.peregrine-cms/node-js.ui.apps-1.0-SNAPSHOT.zip
+name=node-js.ui.apps.script group=com.peregrine-cms version=1.0-SNAPSHOT path=/com.peregrine-cms/node-js.ui.apps.script-1.0-SNAPSHOT.zip
+name=pagerender-vue.ui.apps group=com.peregrine-cms version=1.0-SNAPSHOT path=/com.peregrine-cms/pagerender-vue.ui.apps-1.0-SNAPSHOT.zip
+name=replication.ui.apps group=com.peregrine-cms version=1.0-SNAPSHOT path=/com.peregrine-cms/replication.ui.apps-1.0-SNAPSHOT.zip
+```
+
+#### List packages on the server on AEM Author on port 4502.
+```
+slingpackager list -s http://localhost:4502
+name=we.retail.config group=adobe/aem6 version=4.0.0 path=we.retail.config-4.0.0.zip
+name=aem-sample-replication-config group=adobe/aem6/sample version=0.0.2 path=aem-sample-replication-config-0.0.2.zip
+name=we.retail.commons.content group=adobe/aem6/sample version=4.0.0 path=we.retail.commons.content-4.0.0.zip
+name=we.retail.community.apps group=adobe/aem6/sample version=1.11.84 path=we.retail.community.apps-1.11.84.zip
+name=we.retail.community.content group=adobe/aem6/sample version=1.11.84 path=we.retail.community.content-1.11.84.zip
+name=we.retail.community.enablement.author group=adobe/aem6/sample version=1.11.87 path=we.retail.community.enablement.author-1.11.87.zip
+name=we.retail.community.enablement.common group=adobe/aem6/sample version=1.11.84 path=we.retail.community.enablement.common-1.11.84.zip
+name=we.retail.ui.apps group=adobe/aem6/sample version=4.0.0 path=we.retail.ui.apps-4.0.0.zip
+...
+```
+
+#### Install uploaded package.
+```
+slingpackager install /themeclean-flex/ui.apps-1.0-SNAPSHOT.zip
+```
+
+#### Uninstall package.
+```
+slingpackager uninstall /themeclean-flex/ui.apps-1.0-SNAPSHOT.zip
+```
+
+#### Delete package.
+```
+slingpackager delete /themeclean-flex/ui.apps-1.0-SNAPSHOT.zip
 ```

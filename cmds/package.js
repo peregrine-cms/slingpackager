@@ -14,6 +14,15 @@ exports.builder = {
   },
   user: {
     hidden: true
+  },
+  destination: {
+    alias: 'd',
+    describe: 'Package destination directory. Defaults to current directory.'
+  },
+  config: {
+    alias: 'c',
+    describe: 'Package configuration/properties. Package properties.xml and package name are generated from this. ' +
+      'If this option is missing slingpackage will search for slingpackager.config.js in the parent directories.'
   }
 }
 exports.handler = (argv) => {
@@ -25,13 +34,20 @@ exports.handler = (argv) => {
 }
 
 function archive(argv) {
-  var json = getConfigJson(argv.folder);
+  var json = getConfigJson(argv);
   if(json === undefined) {
     logger.error(configFile,'not found in the project.');
     throw "Unable to find configuration " + configFile;
   }
 
-  var packagePath = path.join(process.cwd(), packageName(json));
+  var destDir = process.cwd();
+  if(argv.destination && 
+    fs.existsSync(argv.destination) && 
+    fs.statSync(argv.destination).isDirectory()) {
+      destDir = argv.destination
+  }
+
+  var packagePath = path.join(destDir, packageName(json));
 
   logger.log('package folder', argv.folder, 'as', packagePath);
   var output = fs.createWriteStream(packagePath);
@@ -145,13 +161,26 @@ function packageName(json) {
   return name+"-"+version+".zip";
 }
 
-function getConfigJson(dirPath) {
-  var configFile = findConfigFile(dirPath);
+function getConfigJson(argv) {
+  var configFile 
+  if(argv.config) {
+    if(fs.existsSync(argv.config) && fs.statSync(argv.config).isFile) {
+      configFile = argv.config;
+    } else {
+      logger.warn('Unable to find configuration file',argv.config);
+    }
+  } 
+  
+  if(configFile === undefined) {
+    configFile = findConfigFile(argv.folder);
+  }
 
   if(configFile != undefined) {
     var json = JSON.parse(fs.readFileSync(configFile, 'utf8'));
     logger.debug(JSON.stringify(json));
     return json;
+  } else {
+    logger.error('Unable to find configuration file either in parent folders or provided via --config option.');
   }
 
   return undefined;
@@ -170,6 +199,6 @@ function findConfigFile(dirPath) {
     }
   }
 
-  logger.warn('Unable to find package.json');
+  logger.warn('Unable to find',configFile);
   return undefined;
 }
