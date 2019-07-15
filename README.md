@@ -101,7 +101,7 @@ The ```<folder>``` should point to the parent folder of jcr_root and META_INF wi
 Bellow is an example of minimal configuration required for package generation using ```package``` command.
 
 ```
-{
+module.exports = {
     "vault-properties": {
 		"comment": "myapp - UI Apps",
 		"entry": {
