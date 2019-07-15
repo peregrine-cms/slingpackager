@@ -9,7 +9,9 @@ exports.desc = 'upload package to server'
 exports.builder = {
   install: {
     alias: 'i',
-    describe: 'install the package after it\'s uploaded'
+    describe: 'install the package after it\'s uploaded',
+    default: false,
+    boolean: true
   }
 }
 exports.handler = (argv) => {
