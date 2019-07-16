@@ -17,11 +17,13 @@
   "license": "Apache-2.0",
   "dependencies": {
     "archiver": "^3.0.0",
-    "mocha": "^6.1.4",
     "request": "^2.88.0",
     "verbosity": "^1.1.1",
     "xml2js": "^0.4.19",
     "xmlbuilder": "^13.0.2",
     "yargs": "^13.2.4"
+  },
+  "devDependencies": {
+    "mocha": "^6.1.4"
   }
 }
