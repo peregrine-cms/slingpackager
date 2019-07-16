@@ -117,6 +117,22 @@ This should be placed in the file named _slingpackager.config.js_ anywhere in th
 
 The above example will result in a package file named ui.apps-1.0-SNAPSHOT.zip with the fillowing properties.xml file inside it's META/vault folder.
 
+```
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<properties>
+  <comment>myapp - UI Apps</comment>
+  <entry key="name">ui.apps</entry>
+  <entry key="version">1.0-SNAPSHOT</entry>
+  <entry key="group">themeclean-flex</entry>
+  <entry key="createdBy">slingpackager</entry>
+  <entry key="acHandling">IGNORE</entry>
+  <entry key="allowIndexDefinitions">false</entry>
+  <entry key="requiresRoot">false</entry>
+  <entry key="path">/etc/packages/myapp/ui.apps-1.0-SNAPSHOT.zip</entry>
+</properties>
+```
+
 ### Upload
 
 ```
@@ -222,7 +238,7 @@ name=pagerender-vue.ui.apps group=com.peregrine-cms version=1.0-SNAPSHOT path=/c
 name=replication.ui.apps group=com.peregrine-cms version=1.0-SNAPSHOT path=/com.peregrine-cms/replication.ui.apps-1.0-SNAPSHOT.zip
 ```
 
-#### List packages on the server on AEM Author on port 4502.
+#### List packages on local AEM Author on port 4502.
 ```
 slingpackager list -s http://localhost:4502
 name=we.retail.config group=adobe/aem6 version=4.0.0 path=we.retail.config-4.0.0.zip
