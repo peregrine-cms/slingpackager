@@ -14,6 +14,15 @@ exports.builder = {
   },
   user: {
     hidden: true
+  },
+  destination: {
+    alias: 'd',
+    describe: 'Package destination directory. Defaults to current directory.'
+  },
+  config: {
+    alias: 'c',
+    describe: 'Package configuration/properties. Package properties.xml and package name are generated from this. ' +
+      'If this option is missing slingpackage will search for slingpackager.config.js in the parent directories.'
   }
 }
 exports.handler = (argv) => {
@@ -25,13 +34,20 @@ exports.handler = (argv) => {
 }
 
 function archive(argv) {
-  var json = getConfigJson(argv.folder);
-  if(json === undefined) {
+  var config = loadConfig(argv);
+  if(config === undefined) {
     logger.error(configFile,'not found in the project.');
     throw "Unable to find configuration " + configFile;
   }
 
-  var packagePath = path.join(process.cwd(), packageName(json));
+  var destDir = process.cwd();
+  if(argv.destination && 
+    fs.existsSync(argv.destination) && 
+    fs.statSync(argv.destination).isDirectory()) {
+      destDir = argv.destination
+  }
+
+  var packagePath = path.join(destDir, packageName(config));
 
   logger.log('package folder', argv.folder, 'as', packagePath);
   var output = fs.createWriteStream(packagePath);
@@ -47,8 +63,8 @@ function archive(argv) {
   var metainf = path.join(argv.folder, 'META-INF');
   archive.directory(metainf, 'META-INF', { name: 'META-INF' });
 
-  addConfigDefaults(json);
-  var xml = propertiesXMLFromJson(json);
+  addConfigDefaults(config);
+  var xml = propertiesXMLFromJson(config);
   logger.debug('Writing generated META-INF/vault/properties.xml');
   logger.debug(xml);
   archive.append(xml, {name: 'META-INF/vault/properties.xml'});
@@ -100,8 +116,8 @@ function propertiesXMLFromJson(json) {
   return xmlProlog + xml.toString({ pretty: true});
 }
 
-function addConfigDefaults(json) {
-  var properties = json['vault-properties'];
+function addConfigDefaults(config) {
+  var properties = config['vault-properties'];
   var entries = properties['entry'];
 
   if(!entries['createdBy']) {
@@ -129,8 +145,8 @@ function addConfigDefaults(json) {
   }
 }
 
-function packageName(json) {
-  var properties = json['vault-properties'];
+function packageName(config) {
+  var properties = config['vault-properties'];
   var entries = properties['entry'];
   var name = entries['name'];
   var group = entries['group'];
@@ -145,14 +161,39 @@ function packageName(json) {
   return name+"-"+version+".zip";
 }
 
-function getConfigJson(dirPath) {
-  var configFile = findConfigFile(dirPath);
+function loadConfig(argv) {
+  var configFile 
+  if(argv.config) {
+    if(fs.existsSync(argv.config) && fs.statSync(argv.config).isFile) {
+      configFile = argv.config;
+    } else {
+      logger.warn('Unable to find configuration file',argv.config);
+    }
+  } 
+  
+  if(configFile === undefined) {
+    configFile = findConfigFile(argv.folder);
+  }
 
   if(configFile != undefined) {
-    var json = JSON.parse(fs.readFileSync(configFile, 'utf8'));
-    logger.debug(JSON.stringify(json));
-    return json;
+    var config = requireConfig(configFile);
+    if(config === undefined) {
+      config = JSON.parse(fs.readFileSync(configFile, 'utf8'));
+    }
+
+    logger.debug(JSON.stringify(config));
+    return config;
+  } else {
+    logger.error('Unable to find configuration file either in parent folders or provided via --config option.');
   }
+
+  return undefined;
+}
+
+function requireConfig(configFile) {
+  try {
+    return require(configFile);
+  } catch(err) {}
 
   return undefined;
 }
@@ -170,6 +211,6 @@ function findConfigFile(dirPath) {
     }
   }
 
-  logger.warn('Unable to find package.json');
+  logger.warn('Unable to find',configFile);
   return undefined;
 }

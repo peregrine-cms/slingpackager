@@ -17,7 +17,9 @@ require('yargs')
     },
     verbose: {
       alias: 'v',
-      describe: 'turn on verbose output'
+      describe: 'turn on verbose output',
+      default: false,
+      boolean: true
     }
   })
   .argv
