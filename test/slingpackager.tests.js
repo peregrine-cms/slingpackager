@@ -1,5 +1,6 @@
 // test/slingpackager.tests.js
 const logger = require('../utils/consoleLogger');
+const serverInfo = require('./serverInfo');
 const fs = require('fs');
 const assert = require('assert');
 const path = require('path');
@@ -10,66 +11,57 @@ const packageName = 'testContent-1.0-SNAPSHOT.zip'
 const packPath = path.join('test','testContent-1.0-SNAPSHOT.zip');
 const packDirPath = path.join('test','resources','test-content');
 
-const server = 'http://localhost:8080';
-const packServerPath = '/etc/packages/slingpackager/testContent-1%2E0-SNAPSHOT.zip';
-const packServerName = '/slingpackager/testContent-1.0-SNAPSHOT.zip';
-const testInstallPath = '/content/slingpackager/test.json';
+const server = serverInfo.server;
+const packServerPath = serverInfo.packServerPath;
+const packServerName = serverInfo.packServerName;
+const testInstallPath = serverInfo.testInstallPath;
+const username = serverInfo.username;
+const password = serverInfo.password;
+
+// uncomment to get more logging
+// logger.verbosity(5);
 
 describe('slingpackager', function() {
 
     // package test
-    describe('create', function() {
+    describe('package', function() {
         it('should create package', function() {
-            var cmd = 'node bin/slingpackager package -d test ' + packDirPath;
-            var output = exec(cmd);
-            assert.equal((fs.existsSync(packPath) && fs.statSync(packPath).size>0), true);
+            testPackage();
         });
     });
 
     // upload test
     describe('upload', function() {
-        it('should upload package', function() {
-            var cmd = 'node bin/slingpackager upload ' + packPath;
-            var output = exec(cmd);
-            logger.log(output);
-
-            // setTimeout(() => {assert200(server + packServerPath);}, 1000);
+        it('should upload package', function(done) { 
+            testUpload(done); 
         });
     });
 
     // list test
     describe('list', function() {
         it('should list packages', function() {
-            var cmd = 'node bin/slingpackager list';
-            var output = exec(cmd);
-            logger.log(output);
+            testList();
         });
     });
 
     // install test
     describe('install', function() {
-        it('should install package', function() {
-            var cmd = 'node bin/slingpackager install ' + packServerName;
-            var output = exec(cmd);
-            logger.log(output);
+        it('should install package', function(done) {
+            testInstall(done);
         });
     });
 
     // uninstall test
     describe('uninstall', function() {
-        it('should uninstall package', function() {
-            var cmd = 'node bin/slingpackager uninstall ' + packServerName;
-            var output = exec(cmd);
-            logger.log(output);
+        it('should uninstall package', function(done) {
+            testUninstall(done);
         });
     });
 
     // delete test
     describe('delete', function() {
-        it('should delete package', function() {
-            var cmd = 'node bin/slingpackager delete ' + packServerName;
-            var output = exec(cmd);
-            logger.log(output);
+        it('should delete package', function(done) {
+            testDelete(done); 
         });
     });
 
@@ -78,8 +70,83 @@ describe('slingpackager', function() {
     });
 });
 
-function assert200(testURL) {
+// package command test
+function testPackage() {
+    var cmd = 'node bin/slingpackager package -d test ' + packDirPath;
+    var output = exec(cmd);
+    assert.equal((fs.existsSync(packPath) && fs.statSync(packPath).size>0), true);
+}
+
+// upload command test
+function testUpload(done) {
+    var cmd = 'node bin/slingpackager upload ' + packPath;
+    var output = exec(cmd);
+    logger.debug(output);
+    assert200(server + packServerPath, done);
+}
+
+// list command test
+function testList() {
+    var cmd = 'node bin/slingpackager list';
+    var output = exec(cmd);
+    logger.debug(output);
+}
+
+// install command test
+function testInstall(done) {
+    var cmd = 'node bin/slingpackager install ' + packServerName;
+    var output = exec(cmd);
+    logger.debug(output);
+    assert200(server + testInstallPath, done);
+};
+
+// uninstall command test
+function testUninstall(done) {
+    var cmd = 'node bin/slingpackager uninstall ' + packServerName;
+    var output = exec(cmd);
+    logger.debug(output);
+    assert404(server + testInstallPath, done);
+};
+
+// delete test
+function testDelete(done) {
+    var cmd = 'node bin/slingpackager delete ' + packServerName;
+    var output = exec(cmd);
+    logger.debug(output);
+    assert404(server + packServerPath, done);
+};
+
+function cleanup() {
+    exec('rm ' + packPath);
+}
+
+function assert200(testURL, done) {
+    setTimeout(() => { assertStatusCode(testURL, 200, done); }, 100);
+}
+
+function assert404(testURL, done) {
+    setTimeout(() => { assertStatusCode(testURL, 404, done); }, 100);
+}
+
+function assertStatusCode(testURL, statusCode, done) {
+    logger.debug('assertStatusCode(',testURL,',',statusCode,'assertStatusCode');
     request.get({url: testURL}, function(error, response, body) {
-        assert.equal(response && response.statusCode===200);
-    });
+        logResponse(error, response, body);
+        
+        try {
+            assert.equal(response && response.statusCode===statusCode, true);
+        } finally {
+            if(done) {
+                done();
+            }
+        }
+    }).auth(username, password);
+}
+
+function logResponse(error, response, body) {
+    logger.debug('error ->', error);
+    if(response) {
+        logger.debug('response ->', response.statusCode);
+    }
+    // logger.debug('body ->', body);
 }
