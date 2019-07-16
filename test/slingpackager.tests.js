@@ -1,5 +1,6 @@
 // test/slingpackager.tests.js
 const logger = require('../utils/consoleLogger');
+const serverInfo = require('./serverInfo');
 const fs = require('fs');
 const assert = require('assert');
 const path = require('path');
@@ -10,12 +11,12 @@ const packageName = 'testContent-1.0-SNAPSHOT.zip'
 const packPath = path.join('test','testContent-1.0-SNAPSHOT.zip');
 const packDirPath = path.join('test','resources','test-content');
 
-const server = 'http://localhost:8080';
-const packServerPath = '/etc/packages/slingpackager/testContent-1%2E0-SNAPSHOT.zip';
-const packServerName = '/slingpackager/testContent-1.0-SNAPSHOT.zip';
-const testInstallPath = '/content/slingpackager/test.json';
-const username = 'admin';
-const password = 'admin';
+const server = serverInfo.server;
+const packServerPath = serverInfo.packServerPath;
+const packServerName = serverInfo.packServerName;
+const testInstallPath = serverInfo.testInstallPath;
+const username = serverInfo.username;
+const password = serverInfo.password;
 
 // uncomment to get more logging
 // logger.verbosity(5);
