@@ -15,6 +15,9 @@ exports.builder = {
   user: {
     hidden: true
   },
+  retry: {
+    hidden: true
+  },
   destination: {
     alias: 'd',
     describe: 'Package destination directory. Defaults to current directory.'

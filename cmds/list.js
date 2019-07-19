@@ -1,5 +1,4 @@
-const cpmPackager = require('../utils/composumpackager')
-const aemPackager = require('../utils/aempackager')
+const packager = require('../utils/packager')
 const logger = require('../utils/consoleLogger')
 
 exports.command = 'list'
@@ -14,11 +13,10 @@ exports.handler = (argv) => {
     pass = user[1];
   }
 
-  cpmPackager.checkService(argv.server, userName, pass, (success) => {
+  packager.test(argv, (success, packageManager) => {
     if(success) {
-      cpmPackager.list(argv.server, userName, pass);
-    } else {
-      aemPackager.list(argv.server, userName, pass);
+        packageManager.list(argv.server, userName, pass);
     }
-  }); 
+  });
+
 }
