@@ -79,7 +79,7 @@ function testPackage() {
 
 // upload command test
 function testUpload(done) {
-    var cmd = 'node bin/slingpackager upload ' + packPath;
+    var cmd = 'node bin/slingpackager upload ' + packPath + ' -s ' + server;
     var output = exec(cmd);
     logger.debug(output);
     assert200(server + packServerPath, done);
@@ -87,14 +87,14 @@ function testUpload(done) {
 
 // list command test
 function testList() {
-    var cmd = 'node bin/slingpackager list';
+    var cmd = 'node bin/slingpackager list' + ' -s ' + server;
     var output = exec(cmd);
     logger.debug(output);
 }
 
 // install command test
 function testInstall(done) {
-    var cmd = 'node bin/slingpackager install ' + packServerName;
+    var cmd = 'node bin/slingpackager install ' + packServerName + ' -s ' + server;
     var output = exec(cmd);
     logger.debug(output);
     assert200(server + testInstallPath, done);
@@ -102,7 +102,7 @@ function testInstall(done) {
 
 // uninstall command test
 function testUninstall(done) {
-    var cmd = 'node bin/slingpackager uninstall ' + packServerName;
+    var cmd = 'node bin/slingpackager uninstall ' + packServerName + ' -s ' + server;
     var output = exec(cmd);
     logger.debug(output);
     assert404(server + testInstallPath, done);
@@ -110,7 +110,7 @@ function testUninstall(done) {
 
 // delete test
 function testDelete(done) {
-    var cmd = 'node bin/slingpackager delete ' + packServerName;
+    var cmd = 'node bin/slingpackager delete ' + packServerName + ' -s ' + server;
     var output = exec(cmd);
     logger.debug(output);
     assert404(server + packServerPath, done);
