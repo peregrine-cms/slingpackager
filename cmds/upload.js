@@ -18,8 +18,7 @@
  */
 const fs = require('fs');
 const path = require('path')
-const cpmPackager = require('../utils/composumpackager')
-const aemPackager = require('../utils/aempackager')
+const packager = require('../utils/packager')
 const logger = require('../utils/consoleLogger')
 
 exports.command = 'upload <package>'
@@ -52,11 +51,10 @@ exports.handler = (argv) => {
     pass = user[1];
   }
 
-  cpmPackager.checkService(argv.server, userName, pass, (success) => {
+  packager.test(argv, (success, packageManager) => {
     if(success) {
-      cpmPackager.uploadPackage(argv.server, userName, pass, packagePath, argv.install);
-    } else {
-      aemPackager.uploadPackage(argv.server, userName, pass, packagePath, argv.install);
+        packageManager.uploadPackage(argv.server, userName, pass, packagePath, argv.install);
     }
   });
+
 }

@@ -16,8 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-const cpmPackager = require('../utils/composumpackager')
-const aemPackager = require('../utils/aempackager')
+const packager = require('../utils/packager')
 const logger = require('../utils/consoleLogger')
 
 exports.command = 'install <package>'
@@ -31,11 +30,10 @@ exports.handler = (argv) => {
   }
 
   logger.init(argv);
-  cpmPackager.checkService(argv.server, userName, pass, (success) => {
+  packager.test(argv, (success, packageManager) => {
     if(success) {
-      cpmPackager.installPackage(argv.server, userName, pass, argv.package);
-    } else {
-      aemPackager.installPackage(argv.server, userName, pass, argv.package);
+        packageManager.installPackage(argv.server, userName, pass, argv.package);
     }
   });
+
 }

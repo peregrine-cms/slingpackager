@@ -33,6 +33,11 @@ require('yargs')
       default: 'admin:admin',
       describe: 'server credentials in the form username:password'
     },
+    retry: {
+      alias: 'r',
+      default: 10,
+      describe: 'maximum number of service calls to attempt before failing'
+    },
     verbose: {
       alias: 'v',
       describe: 'turn on verbose output',

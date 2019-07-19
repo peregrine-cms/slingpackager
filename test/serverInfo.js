@@ -26,9 +26,19 @@
  * TODO: for now all values are hardcoded.
  */
 
+// default Sling port
 const server = 'http://localhost:8080';
-const packServerPath = '/etc/packages/slingpackager/testContent-1%2E0-SNAPSHOT.zip';
+
+// default AEM author port
+// const server = 'http://localhost:4502';
+
+// Composum package name
 const packServerName = '/slingpackager/testContent-1.0-SNAPSHOT.zip';
+
+// AEM package name
+// const packServerName = 'testContent';
+
+const packServerPath = '/etc/packages/slingpackager/testContent-1%2E0-SNAPSHOT.zip';
 const testInstallPath = '/content/slingpackager/test.json';
 const username = 'admin';
 const password = 'admin';
