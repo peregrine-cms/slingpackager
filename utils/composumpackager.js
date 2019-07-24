@@ -41,116 +41,90 @@ const checkService = (url, username, password, callback) => {
     }).auth(username, password);
 }
 
-const list = (url, username, password) => {
+const list = (url, username, password, maxRetry) => {
     logger.log('Listing packages on', url);
-    listPackages(url, username, password, '');
+    listPackages(url, username, password, '', maxRetry);
 }
 
-const uploadPackage = (url, username, password, packagePath, install) => {
+const uploadPackage = (url, username, password, packagePath, install, maxRetry) => {
     logger.log('Uploading package', packagePath, 'on', url);
 
     let serviceURL = url + uploadEndpoint;
-    logger.debug('Service call: ', serviceURL);
-    let post = request.post({ url: serviceURL }, (error, response, body) => {
-        if (error) {
+    let post = callPostService({serviceURL, username, password, maxRetry}, (error, json) => {
+        if(error) {
+            logger.error('Unable to upload package', packagePath);
             logger.error(error);
-        }
-
-        if (response && response.statusCode === 200) {
-            var json = JSON.parse(body);
+            process.exit(1);
+        } else {
             logger.log(json.status)
             logger.debug(JSON.stringify(json));
 
             if(install) {
-                logger.debug('installing', json.path);
-                installPackage(url, username, password, json.path);
+                logger.info('installing', json.path);
+                installPackage(url, username, password, json.path, maxRetry);
             }
-
-        } else {
-            logger.error('Unable to upload package. statusCode:', response && response.statusCode);
-            logger.debug(body);
         }
-    }).auth(username, password);
+    });
 
     post.form().append('file', fs.createReadStream(packagePath));
 
     logger.debug(JSON.stringify(post.toJSON()));
 }
 
-const deletePackage = (url, username, password, package) => {
+const deletePackage = (url, username, password, package, maxRetry) => {
     logger.log('Deleting package', package, 'on', url);
 
     let serviceURL = url + deleteEndpoint + package;
-    logger.debug('Service call: ', serviceURL);
-    let req = request({ url: serviceURL, method: 'DELETE' }, (error, response, body) => {
-        if (error) {
+    let req = callService({serviceURL, method: 'DELETE', username, password, maxRetry}, (error, json) => {
+        if(error) {
+            logger.error('Unable to delete package', package);
             logger.error(error);
-        }
-
-        if (response && response.statusCode === 200) {
-            if (body) {
-                var json = JSON.parse(body);
-                logger.log(json.status)
-            } else {
-                logger.error('Unable to delete package. Check package name (try by path).');
-            }
+            process.exit(1);
         } else {
-            logger.error('Unable to delete package. statusCode:', response && response.statusCode);
-            logger.debug(body);
+            logger.log(json.status);
+            logger.debug(JSON.stringify(json));
         }
-    }).auth(username, password);
+    });
 
     logger.debug(JSON.stringify(req.toJSON()));
 }
 
-const installPackage = (url, username, password, package) => {
+const installPackage = (url, username, password, package, maxRetry) => {
     logger.log('Installing package', package, 'on', url);
 
     let serviceURL = url + installEndpoint + package;
-    logger.debug('Service call: ', serviceURL);
-    let post = request.post({ url: serviceURL }, (error, response, body) => {
-        if (error) {
+    let post = callPostService({serviceURL, username, password, maxRetry}, (error, json) => {
+        if(error) {
+            logger.error('Unable to install package', package);
             logger.error(error);
-        }
-
-        if (response && response.statusCode === 200) {
-            if (body) {
-                var json = JSON.parse(body);
-                logger.log(json.status)
-            }
+            process.exit(1);
         } else {
-            logger.error('Unable to install package. statusCode:', response && response.statusCode);
-            logger.debug(body);
+            logger.log(json.status)
+            logger.debug(JSON.stringify(json));
         }
-    }).auth(username, password);
+    });
 
     logger.debug(JSON.stringify(post.toJSON()));
 }
 
-const uninstallPackage = (url, username, password, package) => {
+const uninstallPackage = (url, username, password, package, maxRetry) => {
     logger.log('Uninstalling package', package, 'on', url);
 
+    // Commented out endpoint bellow does not work wirh Composum 1.7/Sling9
+    // let serviceURL = url + uninstallEndpoint + package
     let serviceURL = url + '/bin/cpm/core/jobcontrol.job.json';
-    logger.debug('Service call: ', serviceURL);
-    // Commented out code bellow does not work wirh Composum 1.7/Sling9
-    // var post = request.post({ url: url + uninstallEndpoint + package }, (error, response, body) => {
-    var post = request.post({ url: serviceURL }, (error, response, body) => {
-        if (error) {
+    let post = callPostService({serviceURL, username, password, maxRetry}, (error, json) => {
+        if(error) {
+            logger.error('Unable to uninstall package', package);
             logger.error(error);
-        }
-
-        if (response && response.statusCode === 200) {
-            if (body) {
-                var json = JSON.parse(body);
-                logger.log('done');
-                // Commented out for Composum 1.7/Sling9
-                // logger.log(json.status)
-            }
+            process.exit(1);
         } else {
-            logger.error('Unable to uninstall package. statusCode:', response && response.statusCode);
-            logger.debug(body);
+            logger.log('done');
+            // Commented out for Composum 1.7/Sling9
+            // logger.log(json.status)
+            logger.debug(JSON.stringify(json));
         }
-    }).auth(username, password);
+    });
 
     // These parameters are not needed when using uninstallEndpoint with Sling11.
     // This is a workaround for Composum 1.7 and Sling9 which does not have this endpoint.
@@ -167,27 +141,19 @@ const getName = () => {
     return 'Composum Package Manager';
 }
 
-function listPackages(url, username, password, path) {
+function listPackages(url, username, password, path, maxRetry) {
     var serviceURL = url + listEndpoint + path;
-    logger.debug('Service call: ', serviceURL);
-
-    let req = request.get({ url: serviceURL}, (error, response, body) => {
-        if (error) {
+    
+    let req = callGetService({serviceURL, username, password, maxRetry}, (error, json) => {
+        if(error) {
+            logger.error("Unable to list packages.");
             logger.error(error);
-        }
-
-        if (response && response.statusCode === 200) {
-            var json = JSON.parse(body);
-            
-            // Check for structure diff between Composume in Sling9 and Sling11
+            process.exit(1);
+        } else {
             var packages = json.children ? json.children : json;
             displayPackages(url, username, password, packages);
-        } else {
-            logger.error('Unable to connect to server. statusCode:', response && response.statusCode);
-            logger.debug(body);
         }
-
-    }).auth(username, password);
+    }); 
 
     logger.debug(JSON.stringify(req.toJSON()));
 }
@@ -204,6 +170,66 @@ function displayPackages(url, username, password, packages) {
             listPackages(url, username, password, packages[i].path);
         }
     }
+}
+
+function callGetService(data, callback) {
+    data.method = "GET";
+    return callService(data, callback);
+}
+
+function callPostService(data, callback) {
+    data.method = "POST";
+    return callService(data, callback);
+}
+
+function callService(data, callback) {
+    if(data.retryCount === undefined) {
+        data.retryCount = 0;
+        if(data.maxRetry === undefined) {
+            data.maxRetry = 10;
+        }
+    }
+
+    logger.debug(data.retryCount + '. Service call: ', data.serviceURL);
+
+    let req = request({ url: data.serviceURL, method: data.method }, (error, response, body) => {
+        var statusCodeLine = (response === undefined) ? "" : "Response: " + response.statusCode + " : " + response.statusMessage;
+        logger.debug(statusCodeLine);
+
+        if (error) {
+            if(data.retryCount < data.maxRetry) {
+                data.retryCount++;
+                callService(data, callback);
+            } else  { 
+                logger.error(error);
+                callback(error + " " + statusCodeLine, undefined); 
+            }
+
+            return;
+        }
+
+        if (response && response.statusCode === 200) {
+            if (body) {
+                var json = JSON.parse(body);
+                callback(undefined, json);
+
+                return;
+            } else {
+                logger.debug("Respons has no body.");
+            }
+        }
+
+        if(data.retryCount < data.maxRetry) {
+            data.retryCount++;
+            callService(data, callback);
+        } else  { 
+            callback("Error calling service " + data.serviceURL, undefined);
+        }
+
+        return;
+    }).auth(data.username, data.password);
+
+    return req;
 }
 
 module.exports = {

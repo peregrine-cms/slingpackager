@@ -35,7 +35,7 @@ exports.handler = (argv) => {
 
   packager.test(argv, (success, packageManager) => {
     if(success) {
-        packageManager.uploadPackage(argv.server, userName, pass, packagePath, argv.install);
+        packageManager.uploadPackage(argv.server, userName, pass, packagePath, argv.install, argv.retry);
     }
   });
 
