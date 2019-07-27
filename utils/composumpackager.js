@@ -92,49 +92,30 @@ const deletePackage = (url, username, password, package, maxRetry) => {
 const installPackage = (url, username, password, package, maxRetry) => {
     logger.log('Installing package', package, 'on', url);
 
-    let serviceURL = url + installEndpoint + package;
-    let post = callPostService({serviceURL, username, password, maxRetry}, (error, json) => {
+    let post = postJob({url, username, password, package, maxRetry}, 'install', (error, result) => {
         if(error) {
-            logger.error('Unable to install package', package);
+            logger.error('Unable to uninstall package', package);
             logger.error(error);
             process.exit(1);
-        } else {
-            logger.log(json.status)
-            logger.debug(JSON.stringify(json));
-        }
+        } 
     });
-
-    logger.debug(JSON.stringify(post.toJSON()));
 }
 
 const uninstallPackage = (url, username, password, package, maxRetry) => {
     logger.log('Uninstalling package', package, 'on', url);
 
-    // Commented out endpoint bellow does not work wirh Composum 1.7/Sling9
-    // let serviceURL = url + uninstallEndpoint + package
-    let serviceURL = url + '/bin/cpm/core/jobcontrol.job.json';
-    let post = callPostService({serviceURL, username, password, maxRetry}, (error, json) => {
+    let post = postJob({url, username, password, package, maxRetry}, 'uninstall', (error, result) => {
         if(error) {
             logger.error('Unable to uninstall package', package);
             logger.error(error);
             process.exit(1);
         } else {
-            logger.log('done');
-            // Commented out for Composum 1.7/Sling9
-            // logger.log(json.status)
-            logger.debug(JSON.stringify(json));
+            if(result && (typeof(result) === 'string') && result.startsWith('Unable')) {
+                logger.error(result);
+                process.exit(1);
+            }
         }
     });
-
-    // These parameters are not needed when using uninstallEndpoint with Sling11.
-    // This is a workaround for Composum 1.7 and Sling9 which does not have this endpoint.
-    var form = post.form();
-    form.append('event.job.topic', 'com/composum/sling/core/pckgmgr/PackageJobExecutor');
-    form.append('reference', package);
-    form.append('_charset_', 'UTF-8');
-    form.append('operation', 'uninstall');
-
-    logger.debug(JSON.stringify(post.toJSON()));
 }
 
 const getName = () => {
@@ -172,6 +153,27 @@ function displayPackages(url, username, password, packages) {
     }
 }
 
+function postJob(data, operation, callback) {
+    data.serviceURL = data.url + '/bin/cpm/core/jobcontrol.job.json';
+    let post = callPostService(data, (error, json) => {
+        if(json && json['slingevent:eventId']) {
+            setTimeout(() => {
+                getJobOutput(data.url, data.username, data.password, json['slingevent:eventId'], callback)
+            },100);
+        } else {
+            callback(error, json); 
+        }
+    });
+
+    var form = post.form();
+    form.append('event.job.topic', 'com/composum/sling/core/pckgmgr/PackageJobExecutor');
+    form.append('_charset_', 'UTF-8');
+    form.append('operation', operation);
+    form.append('reference', data.package);
+
+    return post;
+}
+
 function callGetService(data, callback) {
     data.method = "GET";
     return callService(data, callback);
@@ -179,7 +181,9 @@ function callGetService(data, callback) {
 
 function callPostService(data, callback) {
     data.method = "POST";
-    return callService(data, callback);
+    var post = callService(data, callback);
+    logger.debug('POST:', JSON.stringify(post.toJSON(), undefined, '   '));
+    return post;
 }
 
 function callService(data, callback) {
@@ -211,8 +215,8 @@ function callService(data, callback) {
         if (response && response.statusCode === 200) {
             if (body) {
                 var json = JSON.parse(body);
+                logger.debug('Response:', JSON.stringify(json, undefined, '   '));
                 callback(undefined, json);
-
                 return;
             } else {
                 logger.debug("Respons has no body.");
@@ -228,8 +232,48 @@ function callService(data, callback) {
 
         return;
     }).auth(data.username, data.password);
-
     return req;
+}
+
+function getJobOutput(url, username, password, eventId, callback, jobState) {
+    var requestData = {url: url + "/bin/cpm/core/jobcontrol.outfile.txt/" + eventId};
+    if(jobState === undefined || jobState === "ACTIVE" || jobState === "QUEUED") {
+        requestData.url = url + "/bin/cpm/core/jobcontrol.job.json/" + eventId;
+    } 
+
+    request.get(requestData, (error, response, body) => {
+        var statusCodeLine = (response === undefined) ? "" : "Response: " + response.statusCode + " : " + response.statusMessage;
+        logger.debug(statusCodeLine);
+
+        if(error) {
+            logger.error(error);
+        } else if(body) {
+            if(body.trim().startsWith("{")) {
+                var json = JSON.parse(body);
+                logger.debug('Response:', JSON.stringify(json, undefined, '   '));
+                if(json["jobState"]) {
+                    setTimeout(()=>{
+                        getJobOutput(url, username, password, eventId, callback, json["jobState"]);
+                    }, 100);
+                    return;
+                }
+            } 
+            
+            logger.log(body.trim());
+        } else if (response && response.statusCode != 200) {
+            if(callback) {
+                callback('Package manager job service failed. '+statusCodeLine, undefined);
+            } else {
+                logger.error('Package manager job service failed.', statusCodeLine);
+                process.exit(1);
+            }
+        }
+
+        if(callback) {
+            callback(error, body); 
+        } 
+
+    }).auth(username, password);
 }
 
 module.exports = {
