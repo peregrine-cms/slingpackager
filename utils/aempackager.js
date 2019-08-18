@@ -104,7 +104,12 @@ function executeCommand(serviceURL, username, password, maxRetry) {
     }
 
     if(result) {
-      logger.log(getStatusText(result));
+      var respLog = getResponseLog(result);
+      if(respLog) {
+        logger.log(respLog);
+      } else {
+        logger.log(getStatusText(result));
+      }
     }
   });
 
@@ -197,6 +202,13 @@ function getStatusText(result) {
   } catch(e) {
     return undefined;
   }
+}
+
+function getResponseLog(result) {
+  if(result.crx.response[0].data && result.crx.response[0].data[0].log) {
+    return result.crx.response[0].data[0].log;
+  }
+  return undefined;
 }
 
 function getData(result) {
