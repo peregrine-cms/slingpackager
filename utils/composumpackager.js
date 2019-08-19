@@ -118,6 +118,23 @@ const uninstallPackage = (url, username, password, package, maxRetry) => {
     });
 }
 
+const buildPackage = (url, username, password, package, maxRetry) => {
+    logger.log('Building package', package, 'on', url);
+
+    let post = postJob({url, username, password, package, maxRetry}, 'assemble', (error, result) => {
+        if(error) {
+            logger.error('Unable to build package', package);
+            logger.error(error);
+            process.exit(1);
+        } else {
+            if(result && (typeof(result) === 'string') && result.startsWith('Unable')) {
+                logger.error(result);
+                process.exit(1);
+            }
+        }
+    });
+}
+
 const getName = () => {
     return 'Composum Package Manager';
 }
@@ -283,6 +300,7 @@ module.exports = {
     deletePackage,
     installPackage,
     uninstallPackage,
+    buildPackage,
     getName
 }
 

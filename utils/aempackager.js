@@ -85,6 +85,11 @@ const uninstallPackage = (url, username, password, package, maxRetry) => {
   executePackageCommand(url, username, password, package, 'uninst', maxRetry);
 }
 
+const buildPackage = (url, username, password, package, maxRetry) => {
+  logger.log('Building AEM package', package, 'on', url);
+  executePackageCommand(url, username, password, package, 'build', maxRetry);
+}
+
 const getName = () => {
   return 'AEM Package Manager';
 }
@@ -104,7 +109,12 @@ function executeCommand(serviceURL, username, password, maxRetry) {
     }
 
     if(result) {
-      logger.log(getStatusText(result));
+      var respLog = getResponseLog(result);
+      if(respLog) {
+        logger.log(respLog);
+      } else {
+        logger.log(getStatusText(result));
+      }
     }
   });
 
@@ -199,6 +209,16 @@ function getStatusText(result) {
   }
 }
 
+function getResponseLog(result) {
+  if(result.crx.response[0].log) {
+    return result.crx.response[0].log;
+  }
+  if(result.crx.response[0].data && result.crx.response[0].data[0].log) {
+    return result.crx.response[0].data[0].log;
+  } 
+  return undefined;
+}
+
 function getData(result) {
   return result.crx.response[0].data;
 }
@@ -210,6 +230,7 @@ module.exports = {
     deletePackage,
     installPackage,
     uninstallPackage,
+    buildPackage,
     getName
 }
 
