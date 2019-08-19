@@ -51,6 +51,13 @@ describe('slingpackager', function() {
         });
     });
 
+    // build test
+    describe('build', function() {
+        it('should build package', function(done) {
+            testBuild(done);
+        });
+    });
+
     // uninstall test
     describe('uninstall', function() {
         it('should uninstall package', function(done) {
@@ -95,6 +102,14 @@ function testList() {
 // install command test
 function testInstall(done) {
     var cmd = 'node bin/slingpackager install ' + packServerName + ' -s ' + server;
+    var output = exec(cmd);
+    logger.debug(output);
+    assert200(server + testInstallPath, done);
+};
+
+// install command test
+function testBuild(done) {
+    var cmd = 'node bin/slingpackager build ' + packServerName + ' -s ' + server;
     var output = exec(cmd);
     logger.debug(output);
     assert200(server + testInstallPath, done);
