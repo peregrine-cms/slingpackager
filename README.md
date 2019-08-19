@@ -182,6 +182,22 @@ Options:
   --verbose, -v  turn on verbose output
 ```
 
+### Build
+
+```
+slingpackager build <package>
+
+build package on server
+
+Options:
+  --version      Show version number                                   [boolean]
+  --help         Show help                                             [boolean]
+  --server, -s   server url                   [default: "http://localhost:8080"]
+  --user, -u     server credentials in the form username:password
+                                                        [default: "admin:admin"]
+  --verbose, -v  turn on verbose output
+```
+
 ### Delete
 
 ```
@@ -260,6 +276,11 @@ slingpackager install /themeclean-flex/ui.apps-1.0-SNAPSHOT.zip
 #### Uninstall package.
 ```
 slingpackager uninstall /themeclean-flex/ui.apps-1.0-SNAPSHOT.zip
+```
+
+#### Build package.
+```
+slingpackager build /themeclean-flex/ui.apps-1.0-SNAPSHOT.zip
 ```
 
 #### Delete package.
